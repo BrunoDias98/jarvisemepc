@@ -259,13 +259,13 @@ if __name__ == "__main__":
     plt.show()
 
     hull = []
-
-    for (iStart, start), (iEnd, end) in zip(checkPoints,checkPoints[1:]):
-        setOfPoints[nrPoints] = start
+    # setOfPoints[np.where(setOfPoints == end)]
+    for (iStart, s), (iEnd, e) in zip(checkPoints,checkPoints[1:]):
+        setOfPoints[nrPoints] = s
         hull += computeHull(nrPoints, iStart, end=iEnd)[:-1]
         # plots(iStart, nrPoints, hull)
 
-    hull += iEnd1
+    hull += [iEnd1,iStart1]
 
 
     # HERE
