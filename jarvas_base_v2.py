@@ -11,10 +11,12 @@ print(os.getcwd())
 
 # Paths might need to be changed 
 input = "05"
+# shapefile = ogr.Open(os.getcwd() + f"/jarvisemepc-main/Pontos/Pontos{input}_gardiner.shp")
 shapefile = ogr.Open(os.getcwd() + f"/../Input/Pontos/Pontos{input}_gardiner.shp")
 # shapefile = ogr.Open(os.getcwd() + f"/jarvisemepc-main/Pontos/edberg_10/edberg_10.shp")
 if(shapefile == None):
     print("Erro ao abrir o shapefile") 
+    
 
 # In order to block prints, uncomment the following line
 #sys.stdout = open(os.devnull, 'w')
@@ -25,8 +27,8 @@ layer = shapefile.GetLayer(0)
 ####    Variaveis Globais  #####
 ################################
 nrPoints = layer.GetFeatureCount()
-# setOfPoints = np.zeros((nrPoints,2))
-setOfPoints = np.zeros((nrPoints+1,2))
+setOfPoints = np.zeros((nrPoints,2))
+# setOfPoints = np.zeros((nrPoints+1,2))
 # 60 nautical miles * meters per nautical mile
 distMaxEntrePontos = 60*1852 
 
@@ -37,6 +39,10 @@ def setOfPointsCreator():
             geom = feature.GetGeometryRef()
             setOfPoints[i][0] = geom.GetX()
             setOfPoints[i][1] = geom.GetY()
+
+# iStart = 15403
+# iEnd =  107277
+
 
 def angulo(a,b,c):
     return np.degrees(np.arctan2(c[:,1]-b[1], c[:,0]-b[0]) - np.arctan2(a[1]-b[1], a[0]-b[0])) % 360
@@ -193,15 +199,23 @@ if __name__ == "__main__":
     #O angulo azimuth
     #calculo da area ao centroide
     #inicio, fim, baixo, esquerda, cima, 5 vertices 4 arestas
+    # setOfPoints[15403] = [-21.22748463,30.59656255]
+    start = np.array([-21.22748463,30.59656255])
+    end = setOfPoints[107277]
+
+
 
     print("\n\n\n Starting \n\n\n\n")
     setOfPointsCreator()
-    # old_nrPoints = nrPoints
-    # setOfPoints = np.vstack([np.unique(setOfPoints, axis=0), np.zeros((1, 2))]) # drop duplicates
-    # nrPoints = len(setOfPoints) - 1
-    # print(f"Dropped {(old_nrPoints - nrPoints)/old_nrPoints:.2%} ({old_nrPoints - nrPoints}/{old_nrPoints})")
+    old_nrPoints = nrPoints
+    setOfPoints = np.vstack([np.unique(setOfPoints, axis=0), np.zeros((1, 2))]) # drop duplicates
+    nrPoints = len(setOfPoints) - 1
+    print(f"Dropped {(old_nrPoints - nrPoints)/old_nrPoints:.2%} ({old_nrPoints - nrPoints}/{old_nrPoints})")
     
-    
+    iStart1 = np.where(np.isclose(setOfPoints[:,0],start[0])&np.isclose(setOfPoints[:,1],start[1]))[0][0]
+    iEnd1 = np.where(np.isclose(setOfPoints[:,0],end[0])&np.isclose(setOfPoints[:,1],end[1]))[0][0]
+    print(iStart1, iEnd1)
+
     # Checkpoints / Pool 
     # Lowest longitude  
     start = np.argmin(setOfPoints[:,0])
@@ -220,42 +234,49 @@ if __name__ == "__main__":
 
     # min long, max lat, min lat
 
-    # checkPoints = [
-    #     (15043, [np.min(setOfPoints[:,0]),np.max(setOfPoints[:,1])]),
-    #     (np.argmin(setOfPoints[:,1]),[np.min(setOfPoints[:,0]), np.max(setOfPoints[:,1])]),
-    #     (np.argmin(setOfPoints[:,0]),[np.min(setOfPoints[:,0]), np.min(setOfPoints[:,1])]), 
-    #     (np.argmax(setOfPoints[:,1]),[np.max(setOfPoints[:,0]), np.min(setOfPoints[:,1])]),
-    #     (107277, setOfPoints[107277])
-    #              ]
+    checkPoints = [
+        (iStart1, [np.min(setOfPoints[:,0]), np.min(setOfPoints[:,1])]),
+        (np.argmin(setOfPoints[:,1]),[np.min(setOfPoints[:,0]), np.min(setOfPoints[:,1])]),
+        (np.argmin(setOfPoints[:,0]),[np.min(setOfPoints[:,0]), np.min(setOfPoints[:,1])]), 
+        (np.argmax(setOfPoints[:,1]),[np.max(setOfPoints[:,0]), np.max(setOfPoints[:,1])]),
+        (iEnd1, [np.max(setOfPoints[:,0]), np.max(setOfPoints[:,1])])]
     
-    # plt.plot(setOfPoints[checkPoints[0][0]][0], setOfPoints[checkPoints[0][0]][1], "bx") 
-    # plt.plot(setOfPoints[checkPoints[1][0]][0], setOfPoints[checkPoints[1][0]][1], "go") 
-    # plt.plot(setOfPoints[checkPoints[2][0]][0], setOfPoints[checkPoints[2][0]][1], "ro") 
-    # plt.plot(setOfPoints[checkPoints[3][0]][0], setOfPoints[checkPoints[3][0]][1], "bo") 
-    # plt.plot(setOfPoints[checkPoints[4][0]][0], setOfPoints[checkPoints[4][0]][1], "rx") 
-    # # ax = plt.gca()
-    # # ax.set_aspect('equal', adjustable='box')
-    # # plt.savefig(f"../Output/sol_{input}.pdf")
-    # plt.show()
+    # checkPoints = [
+    # (np.argmin(setOfPoints[:,1]),[np.min(setOfPoints[:,0]), np.min(setOfPoints[:,1])]),
+    # (np.argmin(setOfPoints[:,0]),[np.min(setOfPoints[:,0]), np.min(setOfPoints[:,1])]), 
+    # (np.argmax(setOfPoints[:,1]),[np.max(setOfPoints[:,0]), np.max(setOfPoints[:,1])])]
 
+    plt.plot(setOfPoints[:, 0], setOfPoints[:, 1], "ro")
+    
+    plt.plot(-21.22748463,30.59656255, "go")
+    
+    iStarts, starts = zip(*checkPoints)
+    starts = np.array(starts)
+    iStarts = np.array(iStarts)
 
-    # hull = []
+    plt.plot(setOfPoints[iStarts,0], setOfPoints[iStarts,1], "bo-") 
+    plt.plot(starts[:,0], starts[:,1], "gx")
+    plt.show()
 
-    # for anchor, start in checkPoints:
-    #     setOfPoints[nrPoints] = np.array(start)
-    #     hull += computeHull(nrPoints, anchor)[:-1]
+    hull = []
 
+    for (iStart, start), (iEnd, end) in zip(checkPoints,checkPoints[1:]):
+        setOfPoints[nrPoints] = start
+        hull += computeHull(nrPoints, iStart, end=iEnd)[:-1]
+        # plots(iStart, nrPoints, hull)
+
+    hull += iEnd1
 
 
     # HERE
-    hull = computeHull(nrPoints, start)
-    # hull = computeHull(nrPoints, 15404, 107277)
+    # hull = computeHull(nrPoints, start)
+    # hull = computeHull(nrPoints, start, iEnd)
     for i in range(len(hull)):
         print(i, hull[i], setOfPoints[hull[i]])
     
     area = computeArea(hull)
     print("Area: {:.5f} m^2".format(area))
     # plots([checkpoint[0] for checkpoint in checkPoints], hull)
-    plots(start, nrPoints, hull)
+    plots(iStart, nrPoints, hull)
     
 
